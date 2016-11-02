@@ -2,51 +2,71 @@
 using System.Collections;
 using UnityEngine.EventSystems;
 
-public class Node : MonoBehaviour {
+public class Node : MonoBehaviour
+{
+    public Color hoverColor = Color.green;
+    public Color notEnoughMoneyColor = Color.red;
+    public Vector3 positionOffset;
 
-	public Color hoverColor = Color.green;
-	public Vector3 positionOffset;
+    [Header("Optional")]
+    public GameObject turret;
 
-	private Renderer rend;
-	private Color defaultColor;
+    private Renderer rend;
+    private Color defaultColor;
 
-	private GameObject turret;
+    private BuildManager buildManager;
 
-	void Start(){
-		rend = GetComponent<Renderer> ();
-		defaultColor = rend.material.color;
-	}
+    public Vector3 BuildPosition { get { return transform.position + positionOffset; } }
 
-	void OnMouseDown(){
-		if (EventSystem.current.IsPointerOverGameObject ())
-			return;
-		
-		if (BuildManager.instance.GetTurretToBuild () == null) {
-			Debug.Log ("There is no turret to build");
-			return;
-		}
+    void Start()
+    {
+        rend = GetComponent<Renderer>();
+        defaultColor = rend.material.color;
+        buildManager = BuildManager.instance;
+    }
 
-		if (turret != null) {
-			Debug.Log ("Can't build here - TODO: Display on screen.");
-			return;
-		}
+    void OnMouseDown()
+    {
+        if (EventSystem.current.IsPointerOverGameObject())
+            return;
 
-		GameObject turretToBuild = BuildManager.instance.GetTurretToBuild ();
-		turret = (GameObject)Instantiate (turretToBuild, transform.position + positionOffset, transform.rotation);
-	}
+        if (!buildManager.CanBuild)
+        {
+            Debug.Log("There is no turret to build");
+            return;
+        }
 
-	void OnMouseEnter(){
-		if (EventSystem.current.IsPointerOverGameObject ())
-			return;
+        if (turret != null)
+        {
+            Debug.Log("Can't build here - TODO: Display on screen.");
+            return;
+        }
 
-		if (BuildManager.instance.GetTurretToBuild () == null)
-			return;
-		
-		rend.material.color = hoverColor;
-	}
+        buildManager.BuildTurretOn(this);
+    }
 
-	void OnMouseExit(){
-		rend.material.color = defaultColor;
-	}
+    void OnMouseEnter()
+    {
+        if (EventSystem.current.IsPointerOverGameObject())
+            return;
+
+        if (!buildManager.CanBuild)
+            return;
+
+        // Check if we have enough money
+        if (buildManager.HasMoney)
+        {
+            rend.material.color = hoverColor;
+        }
+        else
+        {
+            rend.material.color = notEnoughMoneyColor;
+        }
+    }
+
+    void OnMouseExit()
+    {
+        rend.material.color = defaultColor;
+    }
 
 }

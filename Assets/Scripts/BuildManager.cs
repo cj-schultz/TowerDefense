@@ -1,29 +1,50 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class BuildManager : MonoBehaviour {
+public class BuildManager : MonoBehaviour
+{
+    public static BuildManager instance;
 
-	public static BuildManager instance;
+    void Awake()
+    {
+        if (instance != null)
+        {
+            Debug.LogError("More than one BuildManager in the scene!");
+            return;
+        }
 
-	void Awake(){
-		if (instance != null) {
-			Debug.LogError ("More than one BuildManager in the scene!");
-			return;
-		}
+        instance = this;
+    }
 
-		instance = this;
-	}
+    public GameObject standardTurretPrefab;
+    public GameObject missleLauncherPrefab;
 
-	public GameObject standardTurretPrefab;
-	public GameObject anotherTurretPrefab;
+    public GameObject buildEffect;
 
-	private GameObject turretToBuild;
+    public bool CanBuild { get { return turretToBuild != null; } }
 
-	public GameObject GetTurretToBuild(){
-		return turretToBuild;
-	}
+    public bool HasMoney { get { return PlayerStats.Money >= turretToBuild.cost;  } }
 
-	public void SetTurretToBuild(GameObject turret){
-		turretToBuild = turret;
-	}
+    private TurretBlueprint turretToBuild;
+
+    public void BuildTurretOn(Node node)
+    {
+        if(PlayerStats.Money < turretToBuild.cost)
+        {
+            return;
+        }
+
+        PlayerStats.Money -= turretToBuild.cost;
+
+        GameObject turretGO = (GameObject) Instantiate(turretToBuild.prefab, node.BuildPosition, Quaternion.identity);
+        node.turret = turretGO;
+
+        GameObject buildEffectGO = (GameObject)Instantiate(buildEffect, node.BuildPosition, Quaternion.identity);
+        Destroy(buildEffectGO, 4f);
+    }
+
+    public void SelectTurretToBuild(TurretBlueprint turret)
+    {
+        turretToBuild = turret;
+    }
 }
